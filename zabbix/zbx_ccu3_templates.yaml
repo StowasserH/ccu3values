@@ -1,0 +1,205 @@
+zabbix_export:
+  version: '5.2'
+  date: '2020-11-07T15:24:59Z'
+  groups:
+    -
+      name: home
+  templates:
+    -
+      template: ccu_values
+      name: ccu_values
+      groups:
+        -
+          name: home
+      items:
+        -
+          name: 'CCU: Get devices'
+          type: EXTERNAL
+          key: 'ccu3values.py[{$CCU_CACHE_USE}, -t={$CCU_CACHE_TIME}, -f={$CCU_CACHE_FILE} ,-x={$CCU_XMLRPC}, devices]'
+          trends: '0'
+          value_type: TEXT
+        -
+          name: 'CCU: Get device count'
+          type: EXTERNAL
+          key: 'ccu3values.py[{$CCU_CACHE_USE}, -t={$CCU_CACHE_TIME}, -f={$CCU_CACHE_FILE} ,-x={$CCU_XMLRPC}]'
+          trends: '0'
+          value_type: TEXT
+      discovery_rules:
+        -
+          name: devices
+          type: DEPENDENT
+          key: devices
+          delay: '0'
+          description: 'Discover devices'
+          item_prototypes:
+            -
+              name: '{#CCU_DEVICE_NAME} Actual temperature'
+              type: EXTERNAL
+              key: 'ccu3values.py[{$CCU_CACHE_USE}, -t={$CCU_CACHE_TIME}, -f={$CCU_CACHE_FILE} ,-x={$CCU_XMLRPC},  ACTUAL_TEMPERATURE,{#CCU_DEVICE_NAME}]'
+              value_type: FLOAT
+              trigger_prototypes:
+                -
+                  expression: '{min(#5)}<3'
+                  name: '{#CCU_DEVICE_NAME} ice temperature'
+                  priority: AVERAGE
+                  manual_close: 'YES'
+                -
+                  expression: '{min(#10)}<15'
+                  recovery_mode: NONE
+                  name: '{#CCU_DEVICE_NAME} temperature'
+                  priority: WARNING
+                  manual_close: 'YES'
+            -
+              name: '{#CCU_DEVICE_NAME} Humidity'
+              type: EXTERNAL
+              key: 'ccu3values.py[{$CCU_CACHE_USE}, -t={$CCU_CACHE_TIME}, -f={$CCU_CACHE_FILE} ,-x={$CCU_XMLRPC}, HUMIDITY,{#CCU_DEVICE_NAME}]'
+              value_type: FLOAT
+            -
+              name: '{#CCU_DEVICE_NAME} Battery low'
+              type: EXTERNAL
+              key: 'ccu3values.py[{$CCU_CACHE_USE}, -t={$CCU_CACHE_TIME}, -f={$CCU_CACHE_FILE} ,-x={$CCU_XMLRPC},  LOW_BAT,{#CCU_DEVICE_NAME}]'
+              trends: '0'
+              value_type: TEXT
+              trigger_prototypes:
+                -
+                  expression: '{str(true,2)}=1'
+                  name: '{#CCU_DEVICE_NAME} Battery low'
+                  priority: AVERAGE
+                  manual_close: 'YES'
+            -
+              name: '{#CCU_DEVICE_NAME} Battery int'
+              type: EXTERNAL
+              key: 'ccu3values.py[{$CCU_CACHE_USE}, -t={$CCU_CACHE_TIME}, -f={$CCU_CACHE_FILE} ,-x={$CCU_XMLRPC},  LOW_BAT, {#CCU_DEVICE_NAME}]'
+              preprocessing:
+                -
+                  type: BOOL_TO_DECIMAL
+                  parameters:
+                    - ''
+            -
+              name: '{#CCU_DEVICE_NAME} Battery voltage'
+              type: EXTERNAL
+              key: 'ccu3values.py[{$CCU_CACHE_USE}, -t={$CCU_CACHE_TIME}, -f={$CCU_CACHE_FILE} ,-x={$CCU_XMLRPC}, OPERATING_VOLTAGE,{#CCU_DEVICE_NAME}]'
+              value_type: FLOAT
+              trigger_prototypes:
+                -
+                  expression: '{min(#10)}<2.8'
+                  name: '{#CCU_DEVICE_NAME} Battery weak'
+                  priority: WARNING
+                  manual_close: 'YES'
+            -
+              name: '{#CCU_DEVICE_NAME} target temperature'
+              type: EXTERNAL
+              key: 'ccu3values.py[{$CCU_CACHE_USE}, -t={$CCU_CACHE_TIME}, -f={$CCU_CACHE_FILE} ,-x={$CCU_XMLRPC},  SET_POINT_TEMPERATURE,{#CCU_DEVICE_NAME}]'
+              value_type: FLOAT
+          graph_prototypes:
+            -
+              name: '{#CCU_DEVICE_NAME} Battery'
+              graph_items:
+                -
+                  sortorder: '1'
+                  color: 1A7C11
+                  item:
+                    host: ccu_values
+                    key: 'ccu3values.py[{$CCU_CACHE_USE}, -t={$CCU_CACHE_TIME}, -f={$CCU_CACHE_FILE} ,-x={$CCU_XMLRPC}, OPERATING_VOLTAGE,{#CCU_DEVICE_NAME}]'
+                -
+                  sortorder: '2'
+                  color: F63100
+                  item:
+                    host: ccu_values
+                    key: 'ccu3values.py[{$CCU_CACHE_USE}, -t={$CCU_CACHE_TIME}, -f={$CCU_CACHE_FILE} ,-x={$CCU_XMLRPC},  LOW_BAT, {#CCU_DEVICE_NAME}]'
+            -
+              name: '{#CCU_DEVICE_NAME} Humidity'
+              graph_items:
+                -
+                  sortorder: '1'
+                  color: 1A7C11
+                  item:
+                    host: ccu_values
+                    key: 'ccu3values.py[{$CCU_CACHE_USE}, -t={$CCU_CACHE_TIME}, -f={$CCU_CACHE_FILE} ,-x={$CCU_XMLRPC}, HUMIDITY,{#CCU_DEVICE_NAME}]'
+            -
+              name: '{#CCU_DEVICE_NAME} temperature'
+              graph_items:
+                -
+                  sortorder: '1'
+                  color: FF0000
+                  item:
+                    host: ccu_values
+                    key: 'ccu3values.py[{$CCU_CACHE_USE}, -t={$CCU_CACHE_TIME}, -f={$CCU_CACHE_FILE} ,-x={$CCU_XMLRPC},  ACTUAL_TEMPERATURE,{#CCU_DEVICE_NAME}]'
+                -
+                  sortorder: '2'
+                  color: 00FF00
+                  item:
+                    host: ccu_values
+                    key: 'ccu3values.py[{$CCU_CACHE_USE}, -t={$CCU_CACHE_TIME}, -f={$CCU_CACHE_FILE} ,-x={$CCU_XMLRPC},  SET_POINT_TEMPERATURE,{#CCU_DEVICE_NAME}]'
+          master_item:
+            key: 'ccu3values.py[{$CCU_CACHE_USE}, -t={$CCU_CACHE_TIME}, -f={$CCU_CACHE_FILE} ,-x={$CCU_XMLRPC}, devices]'
+          lld_macro_paths:
+            -
+              lld_macro: '{#CCU_DEVICE_NAME}'
+              path: $.device_name
+      httptests:
+        -
+          name: 'ccu server'
+          steps:
+            -
+              name: login
+              url: 'http://ccu3-webui/login.htm'
+      macros:
+        -
+          macro: '{$CCU_CACHE_FILE}'
+          value: /tmp/ccu.cache
+          description: 'The file used as cache,'
+        -
+          macro: '{$CCU_CACHE_TIME}'
+          value: '60'
+          description: 'The file used as cache.'
+        -
+          macro: '{$CCU_CACHE_USE}'
+          value: '--cache-use'
+          description: 'Uses a cache file so that not too many requests are sent to the ccu.'
+        -
+          macro: '{$CCU_XMLRPC}'
+          value: 'http://ccu3-webui/addons/xmlapi/'
+          description: 'Url to the ccu''s xmlapi.'
+      dashboards:
+        -
+          name: Heizung
+          widgets:
+            -
+              type: GRAPH_PROTOTYPE
+              x: '1'
+              width: '16'
+              height: '4'
+              fields:
+                -
+                  type: GRAPH_PROTOTYPE
+                  name: graphid
+                  value:
+                    name: '{#CCU_DEVICE_NAME} temperature'
+                    host: ccu_values
+            -
+              type: GRAPH_PROTOTYPE
+              x: '1'
+              'y': '4'
+              width: '16'
+              height: '4'
+              fields:
+                -
+                  type: GRAPH_PROTOTYPE
+                  name: graphid
+                  value:
+                    name: '{#CCU_DEVICE_NAME} Battery'
+                    host: ccu_values
+            -
+              type: GRAPH_PROTOTYPE
+              x: '1'
+              'y': '8'
+              width: '16'
+              height: '4'
+              fields:
+                -
+                  type: GRAPH_PROTOTYPE
+                  name: graphid
+                  value:
+                    name: '{#CCU_DEVICE_NAME} Humidity'
+                    host: ccu_values
